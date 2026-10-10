@@ -68,13 +68,13 @@ with tabs[0]:
     )
 
     validaciones = ["— Seleccionar —"] + list(eng.VALIDACIONES_PROYECTO.keys())
-    seleccion = st.selectbox("Ejercicio de validación (opcional)", validaciones)
+    seleccion = st.selectbox("Ejercicio de validación (opcional)", validaciones, key="resolver_validacion")
 
     if "resolver_texto" not in st.session_state:
         st.session_state.resolver_texto = ""
 
     if seleccion != "— Seleccionar —":
-        if st.button("Cargar ejercicio seleccionado"):
+        if st.button("Cargar ejercicio seleccionado", key="resolver_cargar"):
             st.session_state.resolver_texto = eng.VALIDACIONES_PROYECTO[seleccion]
 
     texto = st.text_area(
@@ -85,8 +85,8 @@ with tabs[0]:
     )
 
     c1,c2,c3 = st.columns([1,1,4])
-    analizar = c1.button("Analizar", type="primary")
-    resolver = c2.button("Resolver")
+    analizar = c1.button("Analizar", type="primary", key="resolver_analizar")
+    resolver = c2.button("Resolver", key="resolver_resolver")
 
     if analizar or resolver:
         if not texto.strip():
@@ -111,26 +111,26 @@ with tabs[0]:
 # ============================================================
 with tabs[1]:
     st.subheader("Interés compuesto")
-    op = st.selectbox("¿Qué desea calcular?", ["Valor futuro","Valor presente","Tasa","Tiempo"])
+    op = st.selectbox("¿Qué desea calcular?", ["Valor futuro","Valor presente","Tasa","Tiempo"], key="ic_op")
     c1,c2 = st.columns(2)
     P = F = n = None
 
     if op != "Valor presente":
-        P = c1.number_input("Valor presente P", value=100000000.0, min_value=0.0)
+        P = c1.number_input("Valor presente P", value=100000000.0, min_value=0.0, key="ic_P")
     if op != "Valor futuro":
-        F = c2.number_input("Valor futuro F", value=150000000.0, min_value=0.0)
+        F = c2.number_input("Valor futuro F", value=150000000.0, min_value=0.0, key="ic_F")
 
     if op != "Tiempo":
-        n = st.number_input("Número de periodos n", value=12.0, min_value=0.0)
+        n = st.number_input("Número de periodos n", value=12.0, min_value=0.0, key="ic_n")
 
     if op != "Tasa":
-        per_obj = st.selectbox("Periodicidad del tiempo", list(eng.PERIODOS), index=5)
+        per_obj = st.selectbox("Periodicidad del tiempo", list(eng.PERIODOS), index=5, key="ic_per_tiempo")
         _,_,_,i,pasos = rate_inputs("ic", per_obj)
     else:
-        per_obj = st.selectbox("Periodicidad de la tasa buscada", list(eng.PERIODOS), index=5)
+        per_obj = st.selectbox("Periodicidad de la tasa buscada", list(eng.PERIODOS), index=5, key="ic_per_tasa_buscada")
         pasos = ""
 
-    if st.button("Calcular interés compuesto"):
+    if st.button("Calcular interés compuesto", key="ic_calcular"):
         try:
             if op == "Valor futuro":
                 r = eng.ic_vf(P,i,n)
@@ -153,17 +153,18 @@ with tabs[1]:
 with tabs[2]:
     st.subheader("Conversión de tasas")
     c1,c2,c3,c4 = st.columns(4)
-    valor = c1.number_input("Tasa de entrada (%)", value=12.0)
-    tipo = c2.selectbox("Tipo de entrada", eng.TIPOS_TASA)
-    per_origen = c3.selectbox("Periodicidad de entrada", list(eng.PERIODOS))
+    valor = c1.number_input("Tasa de entrada (%)", value=12.0, key="conv_valor")
+    tipo = c2.selectbox("Tipo de entrada", eng.TIPOS_TASA, key="conv_tipo")
+    per_origen = c3.selectbox("Periodicidad de entrada", list(eng.PERIODOS), key="conv_per_origen")
     salida = c4.selectbox(
         "Salida",
         ["Periódica vencida","Periódica anticipada","Efectiva anual",
-         "Nominal anual vencida","Nominal anual anticipada"]
+         "Nominal anual vencida","Nominal anual anticipada"],
+        key="conv_salida"
     )
-    per_dest = st.selectbox("Periodicidad de salida", list(eng.PERIODOS), index=5)
+    per_dest = st.selectbox("Periodicidad de salida", list(eng.PERIODOS), index=5, key="conv_per_dest")
 
-    if st.button("Convertir tasa"):
+    if st.button("Convertir tasa", key="conv_calcular"):
         try:
             iv, pasos = eng.normalizar_tasa(valor,tipo,per_origen,per_dest)
             ea = eng.periodica_a_ea(iv, eng.PERIODOS[per_dest])
@@ -186,19 +187,19 @@ with tabs[2]:
 # ============================================================
 with tabs[3]:
     st.subheader("Tasas indexadas")
-    indice = st.selectbox("Índice", ["IPC","IBR","DTF","UVR"])
+    indice = st.selectbox("Índice", ["IPC","IBR","DTF","UVR"], key="idx_indice")
     c1,c2 = st.columns(2)
-    base = c1.number_input("Índice / tasa base (%)", value=5.0)
-    margen = c2.number_input("Margen / tasa adicional (%)", value=4.0)
-    salida_per = st.selectbox("Periodicidad de salida", list(eng.PERIODOS), index=5)
+    base = c1.number_input("Índice / tasa base (%)", value=5.0, key="idx_base")
+    margen = c2.number_input("Margen / tasa adicional (%)", value=4.0, key="idx_margen")
+    salida_per = st.selectbox("Periodicidad de salida", list(eng.PERIODOS), index=5, key="idx_salida_per")
 
     modalidad = "EA"
     if indice == "DTF":
-        modalidad = st.selectbox("Modalidad DTF", ["TA","NTA"])
+        modalidad = st.selectbox("Modalidad DTF", ["TA","NTA"], key="idx_modalidad_dtf")
     elif indice == "IBR":
-        modalidad = st.selectbox("Modalidad IBR", ["EA","SV"])
+        modalidad = st.selectbox("Modalidad IBR", ["EA","SV"], key="idx_modalidad_ibr")
 
-    if st.button("Calcular tasa indexada"):
+    if st.button("Calcular tasa indexada", key="idx_calcular"):
         try:
             if indice == "DTF":
                 if modalidad == "NTA":
@@ -306,18 +307,18 @@ with tabs[5]:
 # ============================================================
 with tabs[6]:
     st.subheader("Perpetuidades")
-    op = st.selectbox("¿Qué desea calcular?", ["Capital P","Pago A","Tasa i"])
+    op = st.selectbox("¿Qué desea calcular?", ["Capital P","Pago A","Tasa i"], key="perp_op")
     c1,c2 = st.columns(2)
     P=A=i=None
     if op != "Capital P":
-        P=c1.number_input("Capital P", value=800000000.0, min_value=0.0)
+        P=c1.number_input("Capital P", value=800000000.0, min_value=0.0, key="perp_P")
     if op != "Pago A":
-        A=c2.number_input("Pago perpetuo A", value=70000000.0, min_value=0.0)
+        A=c2.number_input("Pago perpetuo A", value=70000000.0, min_value=0.0, key="perp_A")
     if op != "Tasa i":
-        tasa=st.number_input("Tasa periódica (%)", value=8.5)
+        tasa=st.number_input("Tasa periódica (%)", value=8.5, key="perp_i")
         i=eng.pct(tasa)
 
-    if st.button("Calcular perpetuidad"):
+    if st.button("Calcular perpetuidad", key="perp_calcular"):
         try:
             if op=="Capital P":
                 res=eng.perp_capital(A,i); show_result(f"P = {eng.fmt_moneda(res)}")
@@ -338,11 +339,11 @@ with tabs[7]:
         "Para evitar pedir decenas de campos manuales, aquí se resuelven desde el enunciado completo."
     )
     integrador = st.text_area(
-        "Pegue el caso integrador",
+        "Pegue el caso integrador", key="integrador_texto",
         height=300,
         placeholder="Ej.: varias fuentes, reserva final, transferencia entre fondos, equivalencia de planes..."
     )
-    if st.button("Resolver caso integrador", type="primary"):
+    if st.button("Resolver caso integrador", type="primary", key="integrador_resolver"):
         if not integrador.strip():
             st.warning("Pegue primero un enunciado.")
         else:
